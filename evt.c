@@ -171,6 +171,7 @@ static inline void loop_cb(__attribute__((unused)) struct loop_data *data)
 	switch(h->nlmsg_type) {
 	case RTM_NEWNEIGH:
 	case RTM_DELNEIGH:
+		printf("\n=== NEW MSG ===\n");
 		recv_cb_nd(h);
 		break;
 	case RTM_NEWLINK:
@@ -191,29 +192,76 @@ err:
 	return;
 }
 
-static inline void recv_cb_nd(struct nlmsghdr *h)
+static inline void nd_inet_print(unsigned char inet)
+{
+	static const char *const inet_text[] = {
+		"AF_INET",
+		"AF_INET6",
+		"UNKNOWN",
+	};
+
+	const char *text;
+
+	switch(inet) {
+	case AF_INET:
+		text = inet_text[0];
+		break;
+	case AF_INET6:
+		text = inet_text[1];
+		break;
+	default:
+		text = inet_text[2];
+		break;
+	};
+
+	printf("ndm_family... %s\n", text);
+}
+
+static inline void nd_state_print(unsigned short state)
+{
+	for (unsigned short i = 0; i < 8; i++)
+		if ((1U << i) & state)
+			printf("ndm_state.... %s\n", ndm_cache_state[i]);
+}
+
+static inline void nd_ifname_print(struct ndmsg *ndm)
 {
 	char ifname[IF_NAMESIZE];
-
-	struct ndmsg  *ndm = NLMSG_DATA(h);
-	struct rtattr *rta;
 
 	if (NULL == if_indextoname(ndm->ndm_ifindex, ifname))
 		goto err_sys;
 
-	printf("ndm_family: %hhu\n", ndm->ndm_family);
-	printf("ndm_ifindex: %s\n", ifname);
-	printf("ndm_type: %hhu\n", ndm->ndm_type);
-
-	rta = nlm_next_data(h, sizeof *ndm);
-
-	printf("rta_type: %s\n", rta_type_text[rta->rta_type]);
-	(rta_type_call[rta->rta_type])(rta, ndm);
-
+	printf("ndm_ifname... %s\n", ifname);
 	return;
 err_sys:
 	eror_text = strerror(errno);
 	goto err;
 err:
 	print_error(__func__);
+}
+
+static inline void recv_cb_nd(struct nlmsghdr *h)
+{
+	struct ndmsg  *ndm = NLMSG_DATA(h);
+	struct rtattr *rta;
+
+	int len = h->nlmsg_len;
+
+	nd_ifname_print(ndm);
+	nd_inet_print(ndm->ndm_family);
+	nd_state_print(ndm->ndm_state);
+
+	printf("\n");
+
+	rta  = nlm_next_data(h, sizeof *ndm);
+	len -= NLMSG_SPACE(sizeof *ndm);
+
+	while (rta) {
+		printf("rta_type: %s\n", rta_type_text[rta->rta_type]);
+		(rta_type_call[rta->rta_type])(rta, ndm);
+
+		rta = RTA_NEXT(rta,len);
+		if (!RTA_OK(rta,len))
+		    break;
+	}
 }

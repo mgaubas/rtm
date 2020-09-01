@@ -4,6 +4,8 @@ CPPFLAGS       := -MMD
 CPPFLAGS       += -MP
 
 CFLAGS         := -fpic
+CFLAGS         += -march=74kc
+CFLAGS         += -EB
 CFLAGS         += -pedantic
 CFLAGS         += -pedantic-errors
 CFLAGS         += -std=c99
@@ -15,6 +17,8 @@ CFLAGS         += -Wfatal-errors
 LDFLAGS        := -Wl,--build-id=0x$(shell git rev-parse HEAD)
 
 LDLIBS         :=
+
+CC             := mips-suse-linux-gcc
 
 .PHONY: all
 all: evt

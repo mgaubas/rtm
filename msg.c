@@ -8,8 +8,22 @@
 #include <string.h>
 
 
-static const char * default_cb(struct rtattr *rta, struct ndmsg *ndm);
-static const char * dst_cb(struct rtattr *rta, struct ndmsg *ndm);
+static void default_cb(struct rtattr *rta, struct ndmsg *ndm);
+static void dst_cb(struct rtattr *rta, struct ndmsg *ndm);
+static void lladdr_cb(struct rtattr *rta, struct ndmsg *ndm);
+static void probes_cb(struct rtattr *rta, struct ndmsg *ndm);
+static void cacheinfo_cb(struct rtattr *rta, struct ndmsg *ndm);
+
+const char *const ndm_cache_state[] = {
+	[0] = "incomplete",
+	[1] = "reachable",
+	[2] = "stale",
+	[3] = "delay",
+	[4] = "probe",
+	[5] = "failed",
+	[6] = "noarp",
+	[7] = "permanent",
+};
 
 const char *const rta_type_text[] = {
 	[NDA_UNSPEC]       = "unspec",
@@ -29,9 +43,9 @@ const char *const rta_type_text[] = {
 
 rta_type_call_t rta_type_call[] = {
 	[NDA_DST]          = dst_cb,
-	[NDA_LLADDR]       = default_cb,
-	[NDA_CACHEINFO]    = default_cb,
-	[NDA_PROBES]       = default_cb,
+	[NDA_LLADDR]       = lladdr_cb,
+	[NDA_CACHEINFO]    = cacheinfo_cb,
+	[NDA_PROBES]       = probes_cb,
 	[NDA_VLAN]         = default_cb,
 	[NDA_PORT]         = default_cb,
 	[NDA_VNI]          = default_cb,
@@ -42,17 +56,15 @@ rta_type_call_t rta_type_call[] = {
 	[NDA_PROTOCOL]     = default_cb,
 };
 
-static const char * default_cb(struct rtattr *rta, struct ndmsg *ndm)
+static void default_cb(struct rtattr *rta, struct ndmsg *ndm)
 {
 	(void)ndm;
 
 	printf("rta_data_type: %s\n", rta_type_text[rta->rta_type]);
 	printf("rta_data_size: %lu\n", RTA_PAYLOAD(rta));
-
-	return NULL;
 }
 
-static const char * dst_cb(struct rtattr *rta, struct ndmsg *ndm)
+static void dst_cb(struct rtattr *rta, struct ndmsg *ndm)
 {
 	char  addr[INET6_ADDRSTRLEN];
 	const char *data;
@@ -63,5 +75,41 @@ static const char * dst_cb(struct rtattr *rta, struct ndmsg *ndm)
 	assert(NULL != data);
 
 	printf("rta_data: %s\n", data);
-	return NULL;
+}
+
+static void lladdr_cb(struct rtattr *rta, struct ndmsg *ndm)
+{
+	char data[18] = {0};
+	unsigned char *addr = RTA_DATA(rta);
+
+	(void)ndm;
+
+	sprintf(data, "%02x:%02x:%02x:%02x:%02x:%02x",
+		addr[0],
+		addr[1],
+		addr[2],
+		addr[3],
+		addr[4],
+		addr[5]);
+
+	printf("rta_data: %s\n", data);
+}
+
+static void cacheinfo_cb(struct rtattr *rta, struct ndmsg *ndm)
+{
+	struct nda_cacheinfo *ndc = RTA_DATA(rta);
+
+	(void)ndm;
+
+	printf("rta_data: ");
+	printf("confirmed... %u\n", ndc->ndm_confirmed);
+	printf("\t  used........ %u\n", ndc->ndm_used);
+	printf("\t  updated..... %u\n", ndc->ndm_updated);
+	printf("\t  refcnt...... %u\n", ndc->ndm_refcnt);
+}
+
+static void probes_cb(struct rtattr *rta, struct ndmsg *ndm)
+{
+	(void)ndm;
+	printf("rta_data: %u\n", *(unsigned *)RTA_DATA(rta));
 }

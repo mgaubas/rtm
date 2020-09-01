@@ -4,8 +4,9 @@
 #include <linux/neighbour.h>
 #include <linux/rtnetlink.h>
 
-typedef const char * (*rta_type_call_t)(struct rtattr *rta, struct ndmsg *ndm);
+typedef void (*rta_type_call_t)(struct rtattr *rta, struct ndmsg *ndm);
 
+extern const char *const ndm_cache_state[];
 extern const char *const rta_type_text[];
 extern rta_type_call_t   rta_type_call[];
 
