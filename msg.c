@@ -14,6 +14,7 @@ static void dst_cb(struct rtattr *rta, struct ndmsg *ndm);
 static void lladdr_cb(struct rtattr *rta, struct ndmsg *ndm);
 static void probes_cb(struct rtattr *rta, struct ndmsg *ndm);
 static void cacheinfo_cb(struct rtattr *rta, struct ndmsg *ndm);
+static void vlan_cb(struct rtattr *rta, struct ndmsg *ndm);
 
 const char *const ndm_cache_state[] = {
 	[0] = "incomplete",
@@ -26,7 +27,7 @@ const char *const ndm_cache_state[] = {
 	[7] = "permanent",
 };
 
-const char *const rta_type_text[] = {
+const char *const ndm_rta_type[] = {
 	[NDA_UNSPEC]       = "unspec",
 	[NDA_DST]          = "dst",
 	[NDA_LLADDR]       = "lladdr",
@@ -42,12 +43,12 @@ const char *const rta_type_text[] = {
 	[NDA_PROTOCOL]     = "protocol",
 };
 
-rta_type_call_t rta_type_call[] = {
+rta_type_call_t ndm_rta_type_call[] = {
 	[NDA_DST]          = dst_cb,
 	[NDA_LLADDR]       = lladdr_cb,
 	[NDA_CACHEINFO]    = cacheinfo_cb,
 	[NDA_PROBES]       = probes_cb,
-	[NDA_VLAN]         = default_cb,
+	[NDA_VLAN]         = vlan_cb,
 	[NDA_PORT]         = default_cb,
 	[NDA_VNI]          = default_cb,
 	[NDA_IFINDEX]      = default_cb,
@@ -57,11 +58,33 @@ rta_type_call_t rta_type_call[] = {
 	[NDA_PROTOCOL]     = default_cb,
 };
 
+const char *const iim_flag[] = {
+	[0]  = "up",
+	[1]  = "broadcast",
+	[2]  = "debug",
+	[3]  = "loopback",
+	[4]  = "pointopoint",
+	[5]  = "notrailers",
+	[6]  = "running",
+	[7]  = "noarp",
+	[8]  = "promisc",
+	[9]  = "allmulti",
+	[10] = "master",
+	[11] = "slave",
+	[12] = "multicast",
+	[13] = "portsel",
+	[14] = "automedia",
+	[15] = "dynamic",
+	[16] = "lower_up",
+	[17] = "dormant",
+	[18] = "echo",
+};
+
 static void default_cb(struct rtattr *rta, struct ndmsg *ndm)
 {
 	(void)ndm;
 
-	printf("rta_data_type: %s\n", rta_type_text[rta->rta_type]);
+	printf("rta_data_type: %s\n", ndm_rta_type[rta->rta_type]);
 	printf("rta_data_size: %u\n", (unsigned)RTA_PAYLOAD(rta));
 }
 
@@ -113,4 +136,11 @@ static void probes_cb(struct rtattr *rta, struct ndmsg *ndm)
 {
 	(void)ndm;
 	printf("rta_data: %u\n", *(unsigned *)RTA_DATA(rta));
+}
+
+static void vlan_cb(struct rtattr *rta, struct ndmsg *ndm)
+{
+	(void)ndm;
+	printf("rta_data: %hu\n", *(unsigned short *)RTA_DATA(rta));
+
 }

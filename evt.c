@@ -39,7 +39,7 @@ static inline void nl_init_sock_addr(struct sockaddr_nl *addr);
 static inline long nl_verify_payload(struct nlmsghdr *h, int len);
 static inline void loop_cb(struct loop_data *data);
 static inline void recv_cb_nd(struct nlmsghdr *h);
-//static inline void recv_cb_link(struct nlmsghdr *h);
+static inline void recv_cb_link(struct nlmsghdr *h);
 
 static struct sockaddr_nl nl_sock_addr;
 static struct epoll_event poll_data;
@@ -152,6 +152,37 @@ err:
 
 }
 
+static inline void nl_mesg_type(struct nlmsghdr *h)
+{
+	static const char *const arr[] = {
+		"new neigh entry",
+		"del neigh entry",
+		"new link entry",
+		"del link entry"
+	};
+
+	const char *str;
+
+	switch(h->nlmsg_type) {
+	case RTM_NEWNEIGH:
+		str = arr[0];
+		break;
+	case RTM_DELNEIGH:
+		str = arr[1];
+		break;
+	case RTM_NEWLINK:
+		str = arr[2];
+		break;
+	case RTM_DELLINK:
+		str = arr[3];
+		break;
+	default:
+		assert(0);
+	}
+
+	printf("nlm_type.... %s\n", str);
+}
+
 static inline void loop_cb(__attribute__((unused)) struct loop_data *data)
 {
 	struct nlmsghdr *h;
@@ -168,15 +199,22 @@ static inline void loop_cb(__attribute__((unused)) struct loop_data *data)
 	if (-1 == nl_verify_payload(h, r))
 		return;
 
+	printf("\n=== NEW MSG ===\n");
+
+	if (NLM_F_MULTI & h->nlmsg_flags)
+		printf("dbg: this is multi-part message\n"),
+			printf("dbg: only the first message is shown\n");
+
+	nl_mesg_type(h);
+
 	switch(h->nlmsg_type) {
 	case RTM_NEWNEIGH:
 	case RTM_DELNEIGH:
-		printf("\n=== NEW MSG ===\n");
-		recv_cb_nd(h);
+		//recv_cb_nd(h);
 		break;
 	case RTM_NEWLINK:
 	case RTM_DELLINK:
-		printf("recv mesg type == link (%d)\n", h->nlmsg_type);
+		recv_cb_link(h);
 		break;
 	default:
 		assert(0);
@@ -194,27 +232,27 @@ err:
 
 static inline void nd_inet_print(unsigned char inet)
 {
-	static const char *const inet_text[] = {
+	static const char *const arr[] = {
 		"AF_INET",
 		"AF_INET6",
 		"UNKNOWN",
 	};
 
-	const char *text;
+	const char *str;
 
 	switch(inet) {
 	case AF_INET:
-		text = inet_text[0];
+		str = arr[0];
 		break;
 	case AF_INET6:
-		text = inet_text[1];
+		str = arr[1];
 		break;
 	default:
-		text = inet_text[2];
+		str = arr[2];
 		break;
 	};
 
-	printf("ndm_family... %s\n", text);
+	printf("ndm_family... %s\n", str);
 }
 
 static inline void nd_state_print(unsigned short state)
@@ -257,6 +295,40 @@ static inline void recv_cb_nd(struct nlmsghdr *h)
 	len -= NLMSG_SPACE(sizeof *ndm);
 
 	while (rta) {
+		printf("rta_type: %s\n", ndm_rta_type[rta->rta_type]);
+		(ndm_rta_type_call[rta->rta_type])(rta, ndm);
+
+		rta = RTA_NEXT(rta,len);
+		if (!RTA_OK(rta,len))
+		    break;
+	}
+}
+
+static inline void link_state_print(unsigned state)
+{
+	for (unsigned i = 0; i < 20; i++)
+		if ((1U << i) & state)
+			printf("iim_flag.... %s\n", iim_flag[i]);
+}
+
+/* test: ip link add link eth0 vlan16 type vlan id 16 protocol 802.1ad
+ * test: ip link add br-test0 type bridge
+ */
+static inline void recv_cb_link(struct nlmsghdr *h)
+{
+	struct ifinfomsg  *iim = NLMSG_DATA(h);
+	//struct rtattr *rta;
+
+	//int len = h->nlmsg_len;
+
+	link_state_print(iim->ifi_flags);
+	printf("\n");
+
+	/*
+	rta  = nlm_next_data(h, sizeof *ndm);
+	len -= NLMSG_SPACE(sizeof *ndm);
+
+	while (rta) {
 		printf("rta_type: %s\n", rta_type_text[rta->rta_type]);
 		(rta_type_call[rta->rta_type])(rta, ndm);
 
@@ -264,4 +336,5 @@ static inline void recv_cb_nd(struct nlmsghdr *h)
 		if (!RTA_OK(rta,len))
 		    break;
 	}
+	*/
 }
