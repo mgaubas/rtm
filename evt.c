@@ -62,7 +62,7 @@ int main(void)
 	s |= SOCK_NONBLOCK;
 	s  = socket(AF_NETLINK, s, NETLINK_ROUTE);
 	if (-1 == s) {
-		__eror_line__ = __LINE__;
+		eror_line = __LINE__;
 		goto err_sys;
 	}
 
@@ -70,14 +70,14 @@ int main(void)
 
 	r = bind(s, (struct sockaddr *)&nl_sock_addr, sizeof nl_sock_addr);
 	if (-1 == r) {
-		__eror_line__ = __LINE__;
+		eror_line = __LINE__;
 		goto err_sys;
 	}
 
 	poll_fd = EPOLL_CLOEXEC;
 	poll_fd = epoll_create1(poll_fd);
 	if (-1 == poll_fd) {
-		__eror_line__ = __LINE__;
+		eror_line = __LINE__;
 		goto err_sys;
 	}
 
@@ -91,7 +91,7 @@ int main(void)
 	poll_data.data.ptr  = &loop_data;
 	r = epoll_ctl(poll_fd, EPOLL_CTL_ADD, s, &poll_data);
 	if (-1 == r) {
-		__eror_line__ = __LINE__;
+		eror_line = __LINE__;
 		goto err_sys;
 	}
 
@@ -100,8 +100,8 @@ int main(void)
 
 		r = epoll_wait(poll_fd, &poll_data, sizeof poll_data, -1);
 		if (-1 == r) {
-			__eror_line__ = __LINE__;
-			__eror_text__ = strerror(errno);
+			eror_line = __LINE__;
+			eror_text = strerror(errno);
 
 			print_error(__func__);
 
@@ -117,7 +117,7 @@ int main(void)
 
 	exit(EXIT_SUCCESS);
 err_sys:
-	__eror_text__ = strerror(errno);
+	eror_text = strerror(errno);
 	goto err;
 err:
 	print_error(__func__);
@@ -144,7 +144,7 @@ static inline long nl_verify_payload(struct nlmsghdr *h, int len)
 
 	return 0;
 err_msg:
-	__eror_text__ = strerror(-e->error);
+	eror_text = strerror(-e->error);
 	goto err;
 err:
 	print_error(__func__);
@@ -159,7 +159,7 @@ static inline void loop_cb(__attribute__((unused)) struct loop_data *data)
 
 	r = recv(data->sock_fd, data->recv_bp, NL_MSG_LEN, MSG_TRUNC);
 	if (-1 == r) {
-		__eror_line__ = __LINE__;
+		eror_line = __LINE__;
 		goto err_sys;
 	}
 
@@ -184,7 +184,7 @@ static inline void loop_cb(__attribute__((unused)) struct loop_data *data)
 
 	return;
 err_sys:
-	__eror_text__ = strerror(errno);
+	eror_text = strerror(errno);
 	goto err;
 err:
 	print_error(__func__);
@@ -212,7 +212,7 @@ static inline void recv_cb_nd(struct nlmsghdr *h)
 
 	return;
 err_sys:
-	__eror_text__ = strerror(errno);
+	eror_text = strerror(errno);
 	goto err;
 err:
 	print_error(__func__);

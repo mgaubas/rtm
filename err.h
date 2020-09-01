@@ -5,20 +5,20 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static const char  __eror_form__[] =
+static const char  eror_look[] =
 	"eror|file: %s|func: %s|line: %u|text: %s\n";
 
-static const char *__eror_text__ = NULL;
-static unsigned    __eror_line__ = UINT_MAX;
+static const char *eror_text = NULL;
+static unsigned    eror_line = UINT_MAX;
 
 static inline void print_error(const char *__eror_func__)
 {
 	dprintf(STDERR_FILENO, \
-		__eror_form__, \
+		eror_look, \
 		__FILE__,      \
 		__eror_func__, \
-		__eror_line__, \
-		__eror_text__);
+		eror_line, \
+		eror_text);
 }
 
 #endif/*ERR_H*/
