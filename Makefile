@@ -1,20 +1,20 @@
-.DEFAULT_GOAL  := evt
+.DEFAULT_GOAL     := evt
 
-CPPFLAGS       := -MMD
-CPPFLAGS       += -MP
+override CPPFLAGS += -MMD
+override CPPFLAGS += -MP
 
-CFLAGS         := -fpic
-CFLAGS         += -pedantic
-CFLAGS         += -pedantic-errors
-CFLAGS         += -std=c99
-CFLAGS         += -Wall
-CFLAGS         += -Wextra
-CFLAGS         += -Werror
-CFLAGS         += -Wfatal-errors
+override CFLAGS   += -pedantic
+override CFLAGS   += -pedantic-errors
+override CFLAGS   += -std=c99
+override CFLAGS   += -Wall
+override CFLAGS   += -Wextra
+override CFLAGS   += -Werror
+override CFLAGS   += -Wfatal-errors
 
-LDFLAGS        := -Wl,--build-id=0x$(shell git rev-parse HEAD)
 
-LDLIBS         :=
+override LDFLAGS   += -Wl,--build-id=0x$(shell git rev-parse HEAD)
+
+override LDLIBS    +=
 
 .PHONY: all
 all: evt

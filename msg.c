@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NDA_PROTOCOL 12
 
 static void default_cb(struct rtattr *rta, struct ndmsg *ndm);
 static void dst_cb(struct rtattr *rta, struct ndmsg *ndm);
@@ -61,7 +62,7 @@ static void default_cb(struct rtattr *rta, struct ndmsg *ndm)
 	(void)ndm;
 
 	printf("rta_data_type: %s\n", rta_type_text[rta->rta_type]);
-	printf("rta_data_size: %lu\n", RTA_PAYLOAD(rta));
+	printf("rta_data_size: %u\n", (unsigned)RTA_PAYLOAD(rta));
 }
 
 static void dst_cb(struct rtattr *rta, struct ndmsg *ndm)
