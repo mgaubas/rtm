@@ -1,2 +1,2 @@
 CpuArch: MIPS
-Command: make CFLAGS='-march=74kc -EB' CC='mips-linux-gnu-gcc'
+Command: make FLAGS='-mips32r2 -znow' CC=mips-linux-muslsf-gcc

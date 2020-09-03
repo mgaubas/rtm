@@ -3,18 +3,18 @@
 override CPPFLAGS += -MMD
 override CPPFLAGS += -MP
 
+override CFLAGS   += -c
+override CFLAGS   += -std=c99
 override CFLAGS   += -pedantic
 override CFLAGS   += -pedantic-errors
-override CFLAGS   += -std=c99
 override CFLAGS   += -Wall
 override CFLAGS   += -Wextra
 override CFLAGS   += -Werror
 override CFLAGS   += -Wfatal-errors
 
+override LDFLAGS  += -Wl,--build-id=0x$(shell git rev-parse HEAD)
 
-override LDFLAGS   += -Wl,--build-id=0x$(shell git rev-parse HEAD)
-
-override LDLIBS    +=
+override LDLIBS   +=
 
 .PHONY: all
 all: evt
